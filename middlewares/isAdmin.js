@@ -6,14 +6,18 @@ const isAdmin = async (req, res, next) => {
 
     try {
         if (!user.is_admin) {
-            return res.status(403).json({ message: "Unauthorized access" });
+            return sendResponse(res, 403, "Unauthorized access", null, {
+                app: { message: "Unauthorized access" }
+            });
         }
 
         req.user = user;
 
         next();
     } catch (err) {
-        return res.status(403).json({ message: "Unauthorized access" });
+        return sendResponse(res, 403, "Unauthorized access", null, {
+            app: { message: "Unauthorized access" }
+        });
     }
 };
 

@@ -1,12 +1,13 @@
 const schemas = require("../validators");
+const sendResponse = require('../utils/response');
 
 const validate = (schemaName) => {
     return (req, res, next) => {
         const schema = schemas[schemaName];
         if (!schema) {
-            return res
-                .status(400)
-                .send({ message: `No schema found for ${schemaName}` });
+            return sendResponse(res, 400, "Validation Errors.", null, {
+                app: { message: `No schema found for ${schemaName}` }
+            });
         }
 
         const { error } = schema.validate(req.body, { abortEarly: false });
@@ -24,10 +25,7 @@ const validate = (schemaName) => {
                 },
                 {}
             );
-            return res.status(400).send({
-				status: 400,
-				errors: formattedErrors
-			});
+            return sendResponse(res, 400, "Validation Errors.", null, formattedErrors);
         }
 
         next();

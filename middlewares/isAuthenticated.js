@@ -5,7 +5,9 @@ const isAuthenticated = async (req, res, next) => {
     const token = req.header("Authorization");
 
     if (!token) {
-        return res.status(401).json({ message: "No token provided" });
+        return sendResponse(res, 401, "No token provided", null, {
+            app: { message: "No token provided" }
+        });
     }
 
     try {
@@ -14,7 +16,9 @@ const isAuthenticated = async (req, res, next) => {
 
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(401).json({ message: "Invalid token" });
+            return sendResponse(res, 401, "Invalid token", null, {
+                app: { message: "Invalid token" }
+            });
         }
 
         req.user = user;
@@ -22,7 +26,9 @@ const isAuthenticated = async (req, res, next) => {
         next();
     } catch (err) {
         console.log(err);
-        return res.status(401).json({ message: "Invalid token" });
+        return sendResponse(res, 401, "Invalid token", null, {
+            app: { message: "Invalid token" }
+        });
     }
 };
 

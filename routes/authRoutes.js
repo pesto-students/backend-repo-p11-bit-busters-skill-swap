@@ -5,7 +5,6 @@ const isAuthenticated = require("../middlewares/isAuthenticated.js");
 const validate = require("../middlewares/validate.js");
 
 router.post("/login", validate("login"), authController.loginUser);
-// router.post("/register", isAuthenticated, authController.profile  );
-// router.get("/profile", isAuthenticated, authController.profile  );
+router.post("/register", validate("register"), authController.registerUser);
 
 module.exports = router;

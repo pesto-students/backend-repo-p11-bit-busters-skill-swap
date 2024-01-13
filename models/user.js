@@ -1,29 +1,160 @@
 const mongoose = require("mongoose");
-const moment = require("moment");
 
-const userSchema = new mongoose.Schema({
-    name: {
+const professionalInformationSchema = new mongoose.Schema({
+    role: {
         type: String,
-        required: true
+        default: null,
     },
-    email: {
+    industry: {
         type: String,
-        required: true,
-        unique: false
+        default: null,
     },
-    password: {
-        type: String,
-        required: true
-    },
-    is_admin: {
-        type: Boolean,
-        default: false
-    },
-}, { timestamps: true });
+    skills_to_offer: [
+        {
+            type: String,
+        },
+    ],
+    skills_seeking: [
+        {
+            type: String,
+        },
+    ],
+});
 
-userSchema.set('toJSON', {
+const interestsSchema = new mongoose.Schema({
+    short_goal: {
+        type: String,
+        default: null,
+    },
+    long_goal: {
+        type: String,
+        default: null,
+    },
+    hobbies: [
+        {
+            type: String,
+            default: null,
+        },
+    ],
+});
+
+const projectSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        default: null,
+    },
+    link: {
+        type: String,
+        default: null,
+    },
+    role: {
+        type: String,
+        default: null,
+    },
+    skills: [
+        {
+            type: String,
+        },
+    ],
+    description: {
+        type: String,
+        default: null,
+    },
+    outcome: {
+        type: String,
+        default: null,
+    },
+});
+
+const educationSchema = new mongoose.Schema({
+    degree: {
+        type: String,
+        default: null,
+    },
+    institute_name: {
+        type: String,
+        default: null,
+    },
+    start_date: {
+        type: Date,
+        default: null,
+    },
+    end_date: {
+        type: Date,
+        default: null,
+    },
+});
+
+const certificationSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        default: null,
+    },
+    issuing_organization: {
+        type: String,
+        default: null,
+    },
+    link: {
+        type: String,
+        default: null,
+    },
+    issuing_date: {
+        type: Date,
+        default: null,
+    },
+    expiry_date: {
+        type: Date,
+        default: null,
+    },
+});
+
+const userSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        password: {
+            type: String,
+            required: true,
+        },
+        is_admin: {
+            type: Boolean,
+            default: false,
+        },
+        city: {
+            type: String,
+            default: null,
+        },
+        state: {
+            type: String,
+            default: null,
+        },
+        about: {
+            type: String,
+            default: null,
+        },
+        professional_information: professionalInformationSchema,
+        interests: interestsSchema,
+        projects: [projectSchema],
+        education: [educationSchema],
+        certifications: [certificationSchema],
+    },
+    { timestamps: true }
+);
+
+userSchema.index({ email: 1 });
+userSchema.index({ "professional_information.skills_to_offer": 1 });
+userSchema.index({ "professional_information.skills_seeking": 1 });
+
+userSchema.set("toJSON", {
     transform: function (doc, ret, options) {
-        delete ret.password; 
+        delete ret.password;
         return ret;
     },
 });
