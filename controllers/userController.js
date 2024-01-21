@@ -1,7 +1,6 @@
 const User = require("../models/user");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const sendResponse = require("../utils/response");
+const agenda = require("../queues/updateUserSkillScoreQueue");
 
 const userController = {
     async updateProfile(req, res) {
@@ -9,8 +8,25 @@ const userController = {
             const { _id } = req.user;
             const data = req.body;
 
+            data.skill_scores = [];
             await User.findByIdAndUpdate(_id, data);
             const user = await User.findById(_id);
+            if (data?.professional_information?.skills_to_offer?.length > 0) {
+                const queue_data = {
+                    user_id: _id,
+                };
+                const flag = await isJobAlreadyScheduled(
+                    "update user profile",
+                    queue_data
+                );
+                if (!flag) {
+                    agenda.schedule(
+                        "in 10 seconds",
+                        "update user profile",
+                        queue_data
+                    );
+                }
+            }
 
             return sendResponse(
                 res,
@@ -19,7 +35,7 @@ const userController = {
                 { user }
             );
         } catch (error) {
-            console.error("Error register user:", error);
+            console.error("Error update user:", error);
             return sendResponse(res, 500, "Internal server error.", null, {
                 app: { message: "Internal server error." },
             });
@@ -42,12 +58,69 @@ const userController = {
                 { user }
             );
         } catch (error) {
-            console.error("Error register user:", error);
+            console.error("Error get user profile:", error);
             return sendResponse(res, 500, "Internal server error.", null, {
                 app: { message: "Internal server error." },
             });
         }
     },
+
+    async searchUsers(req, res) {
+        try {
+            const {
+                skills_offering,
+                skills_seeking,
+                page = 1,
+                limit = 10,
+            } = req.body;
+            const skip = (page - 1) * limit;
+
+            const query = {
+                "skill_scores.skill_name": skills_offering,
+                "professional_information.skills_seeking": {
+                    $in: skills_seeking,
+                },
+                _id: {
+                    $ne: req.user._id,
+                },
+            };
+
+            const users = await User.find(query)
+                .sort({ last_active: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            const total_count = await User.countDocuments(query);
+            const total_pages = Math.ceil(total_count / limit);
+
+            return sendResponse(res, 200, "Users fetched successfully.", {
+                users,
+                pagination: {
+                    total_docs: total_count,
+                    total_pages: total_pages,
+                    currentPage: page,
+                    limit: limit,
+                    hasNextPage: page < total_pages,
+                    hasPrevPage: page > 1,
+                },
+            });
+        } catch (error) {
+            console.error("Error search user:", error);
+            return sendResponse(res, 500, "Internal server error.", null, {
+                app: { message: "Internal server error." },
+            });
+        }
+    },
+};
+
+const isJobAlreadyScheduled = async (jobName, data) => {
+    const existingJobs = await agenda.jobs({
+        name: jobName,
+        "data.user_id": data.user_id,
+        $or: [{ nextRunAt: { $ne: null } }, { lastFinishedAt: null }],
+    });
+
+    return existingJobs.length > 0;
 };
 
 module.exports = userController;

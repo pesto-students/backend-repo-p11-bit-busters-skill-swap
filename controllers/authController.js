@@ -28,7 +28,7 @@ const authController = {
                 { expiresIn: "7d" }
             );
 
-            return sendResponse(res, 200, "User logged in successfully.", { token, user });
+            return sendResponse(res, 200, "User logged in successfully.", { token: `JWT ${token}`, user });
         } catch (error) {
             console.error("Error login user:", error);
             return sendResponse(res, 500, "Internal server error.", null, {
@@ -63,7 +63,7 @@ const authController = {
                 { expiresIn: "7d" }
             );
 
-            return sendResponse(res, 200, "Your registration is successfull.", { token: `JWT ${token}`, user: new_user });
+            return sendResponse(res, 200, "Your registration is successfully.", { token: `JWT ${token}`, user: new_user });
         } catch (error) {
             console.error("Error register user:", error);
             return sendResponse(res, 500, "Internal server error.", null, {

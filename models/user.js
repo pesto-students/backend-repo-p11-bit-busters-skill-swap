@@ -108,6 +108,20 @@ const certificationSchema = new mongoose.Schema({
     },
 });
 
+const skillScoreSchema = new mongoose.Schema({
+    score: {
+        type: Number,
+        default: null,
+    },
+    skill_name: {
+        type: String,
+    },
+    explanation: {
+        type: String,
+        default: null,
+    },
+});
+
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -144,6 +158,11 @@ const userSchema = new mongoose.Schema(
         projects: [projectSchema],
         education: [educationSchema],
         certifications: [certificationSchema],
+        skill_scores: [skillScoreSchema],
+        last_active: {
+            type: Date,
+            default: Date.now,
+        },
     },
     { timestamps: true }
 );
