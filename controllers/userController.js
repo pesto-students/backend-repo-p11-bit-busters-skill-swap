@@ -21,7 +21,7 @@ const userController = {
                 );
                 if (!flag) {
                     agenda.schedule(
-                        "in 10 seconds",
+                        "in 2 minutes",
                         "update user profile",
                         queue_data
                     );
