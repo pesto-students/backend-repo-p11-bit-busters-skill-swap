@@ -76,14 +76,19 @@ const userController = {
             const skip = (page - 1) * limit;
 
             const query = {
-                "skill_scores.skill_name": skills_offering,
-                "professional_information.skills_seeking": {
-                    $in: skills_seeking,
-                },
                 _id: {
                     $ne: req.user._id,
                 },
             };
+
+            if(skills_offering !== '' ){
+                query["skill_scores.skill_name"] = skills_offering;
+            }
+            if(skills_seeking.length > 0){
+                query["professional_information.skills_seeking"] = {
+                    $in: skills_seeking,
+                };
+            }
 
             const users = await User.find(query)
                 .sort({ last_active: -1 })

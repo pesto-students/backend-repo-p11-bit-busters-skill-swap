@@ -38,7 +38,7 @@ const educationSchema = Joi.object({
 const certificationSchema = Joi.object({
     title: Joi.string().optional().allow("").required(),
     issuing_organization: Joi.string().optional().allow("").required(),
-    link: Joi.string().uri().optional().allow("").required(),
+    link: Joi.string().optional().allow("").required(),
     issuing_date: Joi.date().optional().allow("").required(),
     expiry_date: dateGreaterThan('issuing_date', `'expiry_date' must be greater than 'issuing_date'`),
 });

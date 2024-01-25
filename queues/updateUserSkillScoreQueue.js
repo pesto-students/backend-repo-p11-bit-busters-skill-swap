@@ -50,6 +50,7 @@ const getScoreFromOpenAI = async (user_id) => {
 
         const scores = [];
         const content = response.data?.choices?.[0]?.message?.content;
+        console.log(content);
         if (content) {
             const parsed_content = JSON.parse(content);
             parsed_content?.map((skill) => {
@@ -92,8 +93,8 @@ const parseUserToString = (user) => {
     user.education.forEach((edu, index) => {
         prompt += `${index + 1}. Degree: ${edu.degree}, Institute: ${
             edu.institute_name
-        }, From: ${edu.start_date.toISOString().split("T")[0]}, To: ${
-            edu.end_date.toISOString().split("T")[0]
+        }, From: ${edu?.start_date?.toISOString().split("T")[0]}, To: ${
+            edu?.end_date?.toISOString().split("T")[0]
         }\n`;
     });
 
@@ -102,10 +103,10 @@ const parseUserToString = (user) => {
         prompt += `${index + 1}. Title: ${cert.title}, Issuing Organization: ${
             cert.issuing_organization
         }, Date Issued: ${
-            cert.issuing_date.toISOString().split("T")[0]
+            cert?.issuing_date?.toISOString().split("T")[0]
         }, Expiry Date: ${
-            cert.expiry_date
-                ? cert.expiry_date.toISOString().split("T")[0]
+            cert?.expiry_date
+                ? cert?.expiry_date?.toISOString().split("T")[0]
                 : "N/A"
         }\n`;
     });
