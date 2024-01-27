@@ -166,7 +166,7 @@ const userSchema = new mongoose.Schema(
         is_online: {
             type: Boolean,
             default: false,
-        }
+        },
     },
     { timestamps: true }
 );
@@ -175,11 +175,20 @@ userSchema.index({ email: 1 });
 userSchema.index({ "professional_information.skills_to_offer": 1 });
 userSchema.index({ "professional_information.skills_seeking": 1 });
 
+userSchema.virtual("room", {
+    ref: "MessageRoom",
+    localField: "_id",
+    foreignField: "participants",
+    justOne: true,
+});
+
+userSchema.set('toObject', { virtuals: true });
 userSchema.set("toJSON", {
     transform: function (doc, ret, options) {
         delete ret.password;
         return ret;
     },
+    virtuals: true
 });
 
 const User = mongoose.model("User", userSchema);

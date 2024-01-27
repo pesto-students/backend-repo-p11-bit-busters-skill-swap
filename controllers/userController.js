@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const sendResponse = require("../utils/response");
 const agenda = require("../queues/updateUserSkillScoreQueue");
+const MessageRoom = require("../models/messageRoom");
 
 const userController = {
     async updateProfile(req, res) {
@@ -48,7 +49,12 @@ const userController = {
 
             let user = req.user;
             if (user_id) {
-                user = await User.findById(user_id);
+                user = await User.findById(user_id).populate("room");
+                if (!user) {
+                    return sendResponse(res, 400, "Invalid User Id.", null, {
+                        app: { message: "Invalid User Id." },
+                    });
+                }
             }
 
             return sendResponse(
@@ -81,10 +87,10 @@ const userController = {
                 },
             };
 
-            if(skills_offering !== '' ){
+            if (skills_offering !== "") {
                 query["skill_scores.skill_name"] = skills_offering;
             }
-            if(skills_seeking.length > 0){
+            if (skills_seeking.length > 0) {
                 query["professional_information.skills_seeking"] = {
                     $in: skills_seeking,
                 };

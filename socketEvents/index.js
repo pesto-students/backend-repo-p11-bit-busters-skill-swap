@@ -1,5 +1,6 @@
 // const handleChatEvents = require("./messageEvents");
 const handleUserEvents = require("./userEvents");
+const handleMessageRoomEvents = require("./messageRoomEvents");
 const jwt = require("jsonwebtoken");
 
 module.exports = function (io) {
@@ -18,5 +19,6 @@ module.exports = function (io) {
     io.on("connection", (socket) => {
         socket.join(`notifications-${socket.user_id}`);
         handleUserEvents(socket);
+        handleMessageRoomEvents(socket);
     });
 };

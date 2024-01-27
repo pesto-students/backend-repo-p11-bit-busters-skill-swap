@@ -17,7 +17,7 @@ const messageRoomController = {
         try {
             const { room_id } = req.params;
             const { _id, name } = req.user;
-            const { file } = req.files;
+            const file = req?.files?.file;
             const data = req.body;
 
             let file_url = "";
@@ -74,7 +74,7 @@ const messageRoomController = {
             const room = await MessageRoom.findById(room_id);
 
             const receiver = room.participants.find(
-                (participant) => participant.toString() !== _id
+                (participant) => participant.toString() !== _id.toString()
             );
 
             io.to(`notifications-${receiver._id}`).emit("notification", {
@@ -116,8 +116,16 @@ const messageRoomController = {
             // Reverse the order to get ascending order within the page
             messages = messages.reverse();
 
+            const { _id } = req.user;
+            const room = await MessageRoom.findById(room_id).populate({
+                path: "participants",
+                match: { _id: { $ne: _id } },
+                select: "_id name professional_information.role is_online last_active",
+            });
+
             return sendResponse(res, 200, "Messages fetched successfully.", {
                 messages,
+                room,
                 pagination: {
                     total_docs: totalMessages,
                     total_pages: totalPages,
@@ -142,13 +150,11 @@ const messageRoomController = {
                 participants: {
                     $in: [_id],
                 },
-            }).populate("participants", [
-                "_id",
-                "name",
-                "professional_information.role",
-                "is_online",
-                "last_active",
-            ]);
+            }).populate({
+                path: "participants",
+                match: { _id: { $ne: _id } },
+                select: "_id name professional_information.role is_online last_active",
+            });
 
             return sendResponse(res, 200, "Users fetched successfully.", {
                 rooms,
@@ -168,7 +174,7 @@ const messageRoomController = {
 
             const checkIfExists = await MessageRoom.findOne({
                 participants: {
-                    $in: [user_id, _id],
+                    $all: [user_id, _id],
                 },
             });
             let room = checkIfExists;
