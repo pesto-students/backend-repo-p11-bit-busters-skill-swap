@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const getPresignedUrl = require("../utils/getS3PresignedUrl");
 
 const professionalInformationSchema = new mongoose.Schema({
     role: {
@@ -167,9 +168,35 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        profile_picture: {
+            type: String,
+            default: null,
+        },
     },
     { timestamps: true }
 );
+
+userSchema.post(/^find/, function (docs, next) {
+    if (Array.isArray(docs)) {
+        docs.forEach((doc) => updateFileUrl(doc));
+    } else if (docs) {
+        updateFileUrl(docs);
+    }
+    next();
+});
+
+function updateFileUrl(doc) {
+    if (doc && doc.profile_picture) {
+        doc.profile_picture = getPresignedUrl(doc.profile_picture);
+    }
+}
+
+userSchema.statics.updateProfilePictureUrl = function (userData) {
+    if (userData.profile_picture) {
+        userData.profile_picture = getPresignedUrl(userData.profile_picture);
+    }
+    return userData;
+};
 
 userSchema.index({ email: 1 });
 userSchema.index({ "professional_information.skills_to_offer": 1 });
@@ -182,13 +209,13 @@ userSchema.virtual("room", {
     justOne: true,
 });
 
-userSchema.set('toObject', { virtuals: true });
+userSchema.set("toObject", { virtuals: true });
 userSchema.set("toJSON", {
     transform: function (doc, ret, options) {
         delete ret.password;
         return ret;
     },
-    virtuals: true
+    virtuals: true,
 });
 
 const User = mongoose.model("User", userSchema);

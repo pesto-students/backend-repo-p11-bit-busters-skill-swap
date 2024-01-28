@@ -1,7 +1,15 @@
+const AWS = require("aws-sdk");
 const User = require("../models/user");
 const sendResponse = require("../utils/response");
 const agenda = require("../queues/updateUserSkillScoreQueue");
-const MessageRoom = require("../models/messageRoom");
+
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+});
+
+const s3 = new AWS.S3();
 
 const userController = {
     async updateProfile(req, res) {
@@ -117,6 +125,67 @@ const userController = {
             });
         } catch (error) {
             console.error("Error search user:", error);
+            return sendResponse(res, 500, "Internal server error.", null, {
+                app: { message: "Internal server error." },
+            });
+        }
+    },
+
+    async updateProfilePicture(req, res) {
+        try {
+            const { _id } = req.user;
+
+            const profile_picture = req?.files?.profile_picture;
+            const data = req.body;
+
+            let file_url = "";
+
+            const file_temp = profile_picture?.[0];
+            if (file_temp) {
+                try {
+                    const file_name = `profile_pictures/${Date.now()}-${_id}-${
+                        file_temp.originalname
+                    }`;
+
+                    const params = {
+                        Bucket: process.env.AWS_BUCKET_NAME,
+                        Key: file_name,
+                        Body: file_temp.buffer,
+                    };
+
+                    await s3.upload(params).promise();
+                    file_url = `${file_name}`;
+                } catch (error) {
+                    console.error("Error uploading image to S3:", error);
+
+                    return sendResponse(
+                        res,
+                        500,
+                        "Internal server error.",
+                        null,
+                        {
+                            app: { message: "Error uploading image." },
+                        }
+                    );
+                }
+            }
+            console.log(file_url);
+            if(file_url){
+                await User.findByIdAndUpdate(_id, {
+                    profile_picture: file_url
+                });
+            }
+            
+            const user = await User.findById(_id);
+
+            return sendResponse(
+                res,
+                200,
+                "Your profile picture is updated successfully.",
+                { user }
+            );
+        } catch (error) {
+            console.error("Error update profile picture user:", error);
             return sendResponse(res, 500, "Internal server error.", null, {
                 app: { message: "Internal server error." },
             });

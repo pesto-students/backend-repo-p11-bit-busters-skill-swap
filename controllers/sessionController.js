@@ -1,4 +1,5 @@
 const Session = require("../models/session");
+const User = require("../models/user");
 const SessionReview = require("../models/sessionReview");
 const sendResponse = require("../utils/response");
 const createCalendarInviteAgenda = require("../queues/createCalendarInvite.js");
@@ -178,6 +179,7 @@ const sessionController = {
                                 _id: 1,
                                 name: 1,
                                 email: 1,
+                                profile_picture: 1,
                             },
                         },
                     ],
@@ -193,6 +195,22 @@ const sessionController = {
             }
 
             const sessions = await Session.aggregate(aggregationPipeline);
+
+            if(["upcoming", "previous"].includes(status)){
+                await Promise.all(sessions.map(async group => {
+                    await Promise.all(group.sessions.map(async session => {
+                        if (session.other_user) {
+                            session.other_user = await User.updateProfilePictureUrl(session.other_user);
+                        }
+                    }));
+                }));
+            }else{
+                await Promise.all(sessions.map(async session => {
+                    if (session.other_user) {
+                        session.other_user = await User.updateProfilePictureUrl(session.other_user);
+                    }
+                }));
+            }
 
             return sendResponse(res, 200, "Sessions fetched successfully.", {
                 sessions,

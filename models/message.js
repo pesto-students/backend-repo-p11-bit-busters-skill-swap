@@ -53,6 +53,11 @@ const messageSchema = new mongoose.Schema({
     readBy: [readBySchema],
 });
 
+messageSchema.pre(/^find/, function(next) {
+    this.populate('sender_id', '_id name email profile_picture'); 
+    next();
+});
+
 messageSchema.post(/^find/, function(docs, next) {
     if (Array.isArray(docs)) {
         // If the result is an array of documents (e.g., find)

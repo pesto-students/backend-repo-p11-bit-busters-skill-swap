@@ -1,5 +1,4 @@
 const AWS = require("aws-sdk");
-const User = require("../models/user");
 const MessageRoom = require("../models/messageRoom");
 const Message = require("../models/message");
 const sendResponse = require("../utils/response");
@@ -120,7 +119,7 @@ const messageRoomController = {
             const room = await MessageRoom.findById(room_id).populate({
                 path: "participants",
                 match: { _id: { $ne: _id } },
-                select: "_id name professional_information.role is_online last_active",
+                select: "_id name professional_information.role is_online last_active profile_picture",
             });
 
             return sendResponse(res, 200, "Messages fetched successfully.", {
@@ -153,7 +152,7 @@ const messageRoomController = {
             }).populate({
                 path: "participants",
                 match: { _id: { $ne: _id } },
-                select: "_id name professional_information.role is_online last_active",
+                select: "_id name professional_information.role is_online last_active profile_picture",
             });
 
             return sendResponse(res, 200, "Users fetched successfully.", {
