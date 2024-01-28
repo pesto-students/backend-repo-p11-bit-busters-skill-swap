@@ -7,7 +7,8 @@ const createSessionSchema = Joi.object({
         "any.required": `The invited user's ID is required.`,
     }),
     start_time: Joi.date().iso().required().messages({
-        "date.base": `Start time must be in a valid date and time format (e.g., 2024-01-27T15:20:30).`,
+        "date.format": `Start time is required for the session.`,
+        "date.base": `Start time is required for the session..`,
         "date.empty": `Please provide a start time for the session.`,
         "any.required": `Start time is required for the session.`,
     }),
@@ -16,11 +17,16 @@ const createSessionSchema = Joi.object({
         .greater(Joi.ref("start_time"))
         .required()
         .messages({
-            "date.base": `End time must be in a valid date and time format (e.g., 2024-01-27T17:20:30).`,
+            "date.base": `End time is required for the session.`,
             "date.greater": `End time must be later than the start time.`,
             "date.empty": `Please provide an end time for the session.`,
             "any.required": `End time is required for the session.`,
+            "date.format": `End time is required for the session.`,
         }),
+    description: Joi.string().required().allow("").messages({
+        "string.base": `Description should be a valid text.`,
+        "any.required": `Description is required.`,
+    }),
 });
 
 const updateStatusSchema = Joi.object({

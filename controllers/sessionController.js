@@ -1,19 +1,21 @@
 const Session = require("../models/session");
 const SessionReview = require("../models/sessionReview");
 const sendResponse = require("../utils/response");
-const MessageRoom = require("../models/messageRoom");
+const createCalendarInviteAgenda = require("../queues/createCalendarInvite.js");
 
 const sessionController = {
     async createSession(req, res) {
         try {
             const { _id } = req.user;
-            const { invited_user_id, start_time, end_time } = req.body;
+            const { invited_user_id, start_time, end_time, description } =
+                req.body;
 
             const session = new Session({
                 user_id: _id,
                 invited_user_id,
                 start_time,
                 end_time,
+                description,
             });
 
             await session.save();
@@ -45,12 +47,17 @@ const sessionController = {
 
             await session.save();
 
-            return sendResponse(
-                res,
-                200,
-                "Session status updated successfully.",
-                { session }
-            );
+            if (status === "accepted") {
+                createCalendarInviteAgenda
+                    .create("create Google Calendar event", {
+                        session_id,
+                    })
+                    .save();
+            }
+
+            return sendResponse(res, 200, `Request ${status} successfully.`, {
+                session,
+            });
         } catch (error) {
             console.error("Error session status update:", error);
             return sendResponse(res, 500, "Internal server error.", null, {
@@ -64,25 +71,128 @@ const sessionController = {
             const { _id } = req.user;
             const { status } = req.body;
 
-            let query = {
+            let matchQuery = {
                 $or: [{ user_id: _id }, { invited_user_id: _id }],
+            };
+
+            let sort = {};
+            let group = {};
+            const groupByDate = {
+                _id: {
+                    $dateToString: {
+                        format: "%Y-%m-%d",
+                        date: "$start_time",
+                    },
+                },
+                sessions: { $push: "$$ROOT" },
             };
 
             switch (status) {
                 case "upcoming":
-                    query.status = "accepted";
+                    matchQuery.status = "accepted";
+                    sort = { start_time: 1 };
+                    group = groupByDate;
                     break;
                 case "previous":
-                    query.status = "completed";
+                    matchQuery.status = "completed";
+                    sort = { start_time: -1 };
+                    group = groupByDate;
                     break;
                 case "requests":
-                    query.status = "pending";
+                    matchQuery.status = { $in: ["rejected", "pending"] };
+                    sort = { updatedAt: -1 };
                     break;
                 default:
                     break;
             }
 
-            const sessions = await Session.find(query);
+            let aggregationPipeline = [
+                { $match: matchQuery },
+                {
+                    $addFields: {
+                        other_user: {
+                            $cond: {
+                                if: { $eq: ["$user_id", _id] },
+                                then: "$invited_user_id",
+                                else: "$user_id",
+                            },
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "sessionreviews",
+                        localField: "_id",
+                        foreignField: "session_id",
+                        as: "session_reviews",
+                    },
+                },
+                {
+                    $addFields: {
+                        review_by_auth: {
+                            $arrayElemAt: [
+                                {
+                                    $filter: {
+                                        input: "$session_reviews",
+                                        as: "review",
+                                        cond: {
+                                            $eq: ["$$review.review_by", _id],
+                                        },
+                                    },
+                                },
+                                0,
+                            ],
+                        },
+                        review_for_auth: {
+                            $arrayElemAt: [
+                                {
+                                    $filter: {
+                                        input: "$session_reviews",
+                                        as: "review",
+                                        cond: {
+                                            $eq: ["$$review.review_for", _id],
+                                        },
+                                    },
+                                },
+                                0,
+                            ],
+                        },
+                    },
+                },
+            ];
+
+            aggregationPipeline.push({
+                $lookup: {
+                    from: "users",
+                    let: { otherUserId: "$other_user" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: ["$_id", "$$otherUserId"],
+                                },
+                            },
+                        },
+                        {
+                            $project: {
+                                _id: 1,
+                                name: 1,
+                                email: 1,
+                            },
+                        },
+                    ],
+                    as: "other_user",
+                },
+            });
+
+            aggregationPipeline.push({ $unwind: "$other_user" });
+
+            aggregationPipeline.push({ $sort: sort });
+            if (status === "upcoming" || status === "previous") {
+                aggregationPipeline.push({ $group: group });
+            }
+
+            const sessions = await Session.aggregate(aggregationPipeline);
 
             return sendResponse(res, 200, "Sessions fetched successfully.", {
                 sessions,
@@ -95,6 +205,7 @@ const sessionController = {
             });
         }
     },
+
     async addReview(req, res) {
         try {
             const { _id } = req.user;
@@ -102,14 +213,20 @@ const sessionController = {
             const { content, rating } = req.body;
 
             const session = await Session.findById(session_id);
-            if (!session && !(session.user_id === _id || session.invited_user_id === _id)) {
+            if (
+                !session &&
+                !(
+                    session.user_id.toString() === _id.toString() ||
+                    session.invited_user_id.toString() === _id.toString()
+                )
+            ) {
                 return sendResponse(res, 400, "Invalid Session", null, {
                     app: { message: `Invalid Session` },
                 });
             }
 
             const review_for =
-                session.user_id === _id
+                session.user_id.toString() === _id.toString()
                     ? session.invited_user_id
                     : session.user_id;
 
