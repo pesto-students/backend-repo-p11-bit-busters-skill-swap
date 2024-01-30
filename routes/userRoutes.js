@@ -24,5 +24,7 @@ router.post(
 router.get("/profile", isAuthenticated, userController.getUserProfile);
 router.get("/:user_id/profile", isAuthenticated, userController.getUserProfile);
 router.post("/search", isAuthenticated, userController.searchUsers);
+router.post("/reviews", isAuthenticated, userController.getUserReviews);
+router.post("/:user_id/reviews", isAuthenticated, userController.getUserReviews);
 
 module.exports = router;
