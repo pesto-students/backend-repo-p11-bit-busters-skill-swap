@@ -199,8 +199,8 @@ const userController = {
             const { page = 1, limit = 10 } = req.body;
             const skip = (page - 1) * limit;
 
-            if (user_id) {
-                user_id = req.user._id;
+            if (!user_id) {
+                user_id = req.user._id.toString();
             }
 
             const query = {
