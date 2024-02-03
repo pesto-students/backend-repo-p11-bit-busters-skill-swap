@@ -5,7 +5,7 @@ SkillSwap is an innovative platform designed for reciprocal learning and mentori
 
 ## Table of Contents
 - [Demo](#demo)
-- [API Details](#api_details)
+- [API Details](#api-details)
 - [Installation](#installation)
 - [Technology Stack](#technology-stack)
 - [Authors](#authors)
