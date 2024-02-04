@@ -1,6 +1,8 @@
 const Agenda = require("agenda");
 const User = require("../models/user");
 const { default: axios } = require("axios");
+const { createNotification } = require("../utils/notificationUtlis");
+const { generateFrontendUrl } = require("../utils/frontendRoutes");
 
 const agenda = new Agenda({
     db: {
@@ -13,6 +15,15 @@ agenda.define("update user profile", async (job) => {
     const { user_id } = job.attrs.data;
     const scores = await getScoreFromOpenAI(user_id);
     await updateUserScoreInDB(user_id, scores);
+    const notification = {
+        user_id: user_id,
+        redirect_url: generateFrontendUrl("profile"),
+        notification_type: "user_profile_score_updated",
+        title: "Profile Score Updated",
+        message:
+            "Your skill score has been updated based on recent activities.",
+    };
+    await createNotification(notification);
 });
 
 const getScoreFromOpenAI = async (user_id) => {

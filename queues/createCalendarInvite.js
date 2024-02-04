@@ -8,7 +8,6 @@ const agenda = new Agenda({
     },
 });
 
-// Define your Agenda job
 agenda.define("create Google Calendar event", async (job) => {
     try {
         const { session_id } = job.attrs.data;

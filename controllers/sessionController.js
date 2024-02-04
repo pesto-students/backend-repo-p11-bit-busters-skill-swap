@@ -3,11 +3,13 @@ const User = require("../models/user");
 const SessionReview = require("../models/sessionReview");
 const sendResponse = require("../utils/response");
 const createCalendarInviteAgenda = require("../queues/createCalendarInvite.js");
+const { generateFrontendUrl } = require("../utils/frontendRoutes.js");
+const { createNotification } = require("../utils/notificationUtlis.js");
 
 const sessionController = {
     async createSession(req, res) {
         try {
-            const { _id } = req.user;
+            const { _id, name } = req.user;
             const { invited_user_id, start_time, end_time, description } =
                 req.body;
 
@@ -20,6 +22,17 @@ const sessionController = {
             });
 
             await session.save();
+
+            const notification = {
+                user_id: invited_user_id,
+                redirect_url: `${generateFrontendUrl(
+                    "sessions"
+                )}?tab=requests&session_id=${session._id.toString()}`,
+                notification_type: "received_session_requets",
+                title: "New Session Request",
+                message: `${name} has sent you a new request for a meeting.`,
+            };
+            await createNotification(notification);
 
             return sendResponse(res, 200, "Session created successfully.", {
                 session,
@@ -36,6 +49,7 @@ const sessionController = {
         try {
             const { session_id } = req.params;
             const { status } = req.body;
+            const { name } = req.user;
 
             const session = await Session.findById(session_id);
             if (!session) {
@@ -54,6 +68,28 @@ const sessionController = {
                         session_id,
                     })
                     .save();
+
+                const notification = {
+                    user_id: session.user_id,
+                    redirect_url: `${generateFrontendUrl(
+                        "sessions"
+                    )}?tab=upcoming&session_id=${session._id.toString()}`,
+                    notification_type: "session_request_accepted",
+                    title: "Session Request Accepted",
+                    message: `${name} has accepted your session request. Get ready to learn together!`,
+                };
+                await createNotification(notification);
+            } else {
+                const notification = {
+                    user_id: session.user_id,
+                    redirect_url: `${generateFrontendUrl(
+                        "sessions"
+                    )}?tab=requests&session_id=${session._id.toString()}`,
+                    notification_type: "session_request_rejected",
+                    title: "Session Request Rejected",
+                    message: `Unfortunately, ${name} has declined your session request.`,
+                };
+                await createNotification(notification);
             }
 
             return sendResponse(res, 200, `Request ${status} successfully.`, {
@@ -196,20 +232,32 @@ const sessionController = {
 
             const sessions = await Session.aggregate(aggregationPipeline);
 
-            if(["upcoming", "previous"].includes(status)){
-                await Promise.all(sessions.map(async group => {
-                    await Promise.all(group.sessions.map(async session => {
+            if (["upcoming", "previous"].includes(status)) {
+                await Promise.all(
+                    sessions.map(async (group) => {
+                        await Promise.all(
+                            group.sessions.map(async (session) => {
+                                if (session.other_user) {
+                                    session.other_user =
+                                        await User.updateProfilePictureUrl(
+                                            session.other_user
+                                        );
+                                }
+                            })
+                        );
+                    })
+                );
+            } else {
+                await Promise.all(
+                    sessions.map(async (session) => {
                         if (session.other_user) {
-                            session.other_user = await User.updateProfilePictureUrl(session.other_user);
+                            session.other_user =
+                                await User.updateProfilePictureUrl(
+                                    session.other_user
+                                );
                         }
-                    }));
-                }));
-            }else{
-                await Promise.all(sessions.map(async session => {
-                    if (session.other_user) {
-                        session.other_user = await User.updateProfilePictureUrl(session.other_user);
-                    }
-                }));
+                    })
+                );
             }
 
             return sendResponse(res, 200, "Sessions fetched successfully.", {
@@ -226,7 +274,7 @@ const sessionController = {
 
     async addReview(req, res) {
         try {
-            const { _id } = req.user;
+            const { _id, name } = req.user;
             const { session_id } = req.params;
             const { content, rating } = req.body;
 
@@ -247,6 +295,17 @@ const sessionController = {
                 session.user_id.toString() === _id.toString()
                     ? session.invited_user_id
                     : session.user_id;
+
+            const notification = {
+                user_id: review_for,
+                redirect_url: `${generateFrontendUrl(
+                    "sessions"
+                )}?tab=completed&session_id=${session._id.toString()}`,
+                notification_type: "received_review",
+                title: "New Review Received",
+                message: `${name}  has left you a review for your session. See what they said!`,
+            };
+            await createNotification(notification);
 
             const review = new SessionReview({
                 session_id,

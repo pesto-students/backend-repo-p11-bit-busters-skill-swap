@@ -12,56 +12,56 @@ const readBySchema = {
     },
 };
 
-const messageSchema = new mongoose.Schema({
-    room_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: "Room",
-    },
-    sender_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: "User",
-    },
-    content_type: {
-        type: String,
-        required: true,
-        enum: ["text", "image", "file"],
-        default: "text",
-    },
-    text: {
-        type: String,
-        required: function () {
-            return this.content_type === "text";
+const messageSchema = new mongoose.Schema(
+    {
+        room_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: "Room",
         },
-    },
-    file_url: {
-        type: String,
-        required: function () {
-            return (
-                this.content_type === "image" || this.content_type === "file"
-            );
+        sender_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            ref: "User",
         },
+        content_type: {
+            type: String,
+            required: true,
+            enum: ["text", "image", "file"],
+            default: "text",
+        },
+        text: {
+            type: String,
+            required: function () {
+                return this.content_type === "text";
+            },
+        },
+        file_url: {
+            type: String,
+            required: function () {
+                return (
+                    this.content_type === "image" ||
+                    this.content_type === "file"
+                );
+            },
+        },
+        file_name: {
+            type: String,
+        },
+        readBy: [readBySchema],
     },
-    file_name: {
-        type: String,
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-    readBy: [readBySchema],
-});
+    { timestamps: true }
+);
 
-messageSchema.pre(/^find/, function(next) {
-    this.populate('sender_id', '_id name email profile_picture'); 
+messageSchema.pre(/^find/, function (next) {
+    this.populate("sender_id", "_id name email profile_picture");
     next();
 });
 
-messageSchema.post(/^find/, function(docs, next) {
+messageSchema.post(/^find/, function (docs, next) {
     if (Array.isArray(docs)) {
         // If the result is an array of documents (e.g., find)
-        docs.forEach(doc => updateFileUrl(doc));
+        docs.forEach((doc) => updateFileUrl(doc));
     } else if (docs) {
         // If the result is a single document (e.g., findOne)
         updateFileUrl(docs);
