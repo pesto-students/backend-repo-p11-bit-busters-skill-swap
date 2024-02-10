@@ -172,6 +172,10 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        verified_at: {
+            type: Date,
+            default: null,
+        }
     },
     { timestamps: true }
 );
