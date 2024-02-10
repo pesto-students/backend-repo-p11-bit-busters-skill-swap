@@ -1,5 +1,6 @@
 const express = require("express");
 require("dotenv").config();
+require('newrelic');
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
