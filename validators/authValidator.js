@@ -41,9 +41,14 @@ const registerSchema = Joi.object({
         }),
 });
 
+const resendVerificationSchema = Joi.object({
+    email: Joi.string().email().required(),
+});
+
 const authValidator = {
     login: loginSchema,
     register: registerSchema,
+    resend_verification: resendVerificationSchema,
 };
 
 module.exports = authValidator;

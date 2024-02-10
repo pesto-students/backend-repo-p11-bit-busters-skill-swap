@@ -59,7 +59,7 @@ const userController = {
             );
 
             if (!notification) {
-                return sendResponse(res, 404, "Notification not found.", null);
+                return sendResponse(res, 400, "Notification not found.", null);
             }
 
             sendResponse(
