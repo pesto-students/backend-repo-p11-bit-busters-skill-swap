@@ -10,6 +10,7 @@ const agenda = new Agenda({
 
 agenda.define("create Google Calendar event", async (job) => {
     try {
+        console.log("calendar invite scheduled");
         const { session_id } = job.attrs.data;
 
         const session = await Session.findById(session_id)
