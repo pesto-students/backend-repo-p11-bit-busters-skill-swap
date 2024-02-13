@@ -64,7 +64,7 @@ const sessionController = {
 
             if (status === "accepted") {
                 createCalendarInviteAgenda
-                    .schedule("in 1 second", "create Google Calendar event", {
+                    .create("create Google Calendar event", {
                         session_id,
                     })
                     .save();
