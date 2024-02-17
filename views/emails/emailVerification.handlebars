@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+</head>
+
+<body
+    style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; background-color: #f7fafc; font-family: Arial, sans-serif;">
+    <div style="max-width: 32rem; width: 100%; margin-left: auto; margin-right: auto;">
+        <div
+            style="background-color: #ffffff; padding: 2rem; border: 1px solid #d1d5db; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);">
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <img src="https://skillswapbucket.s3.ap-south-1.amazonaws.com/assets/skillswap_logo.png" alt="App Logo"
+                    style="height: 3rem;">
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 700; text-align: center; margin-bottom: 1rem;">Hello {{name}},
+            </h2>
+            <p style="color: #718096; text-align: center; margin-bottom: 1rem;">
+                Thanks for signing up for SkillSwap! Before getting started,
+                could you verify your email address by clicking on the link below? This ensures we have the right
+                address.
+            </p>
+            <div style="display: flex; justify-content: center; margin-bottom: 2rem; width: 100%;">
+                <a href="{{verification_url}}"
+                    style="display: inline-block; background-color: #4299e1; color: #ffffff; font-weight: 700; padding: 0.5rem 1rem; border-radius: 0.25rem; text-decoration: none; transition: background-color 0.2s;">
+                    Verify Email
+                </a>
+            </div>
+            <div
+                style="color: #718096; font-size: 0.875rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; text-align: center;">
+                <p>
+                    If you did not create an account using this address, please ignore this email or
+                    <a href="mailto:info@anandbhagat.com" style="color: #4299e1; text-decoration: underline;">
+                        contact us
+                    </a>.
+                </p>
+                <p style="margin-top: 1rem;">© SkillSwap</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
